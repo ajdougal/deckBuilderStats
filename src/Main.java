@@ -3,23 +3,24 @@ public class Main {
     public static void main(String[] args) {
 	// write your code here
     // true means that the dubious player draws first
-        System.out.println(percentSuccessDubious(200));
+        percentSuccessTotal(100000, false, true);
     }
 
-    public Boolean isPerfectStart(Game game){
-        return false;
-    }
-
-    public static String percentSuccessDubious(Integer numberOfTrials){
-        Integer numberOfSuccess = 0;
+    public static void percentSuccessTotal(Integer numberOfTrials, Boolean startFirst, Boolean isAllowMulligan){
+        Integer numberOfDubiousSuccess = 0;
+        Integer numberOfEvolutionSuccess = 0;
 
         for (Integer index = 0; index < numberOfTrials; index++){
-            Game game = new Game(true);
+            Game game = new Game(startFirst, isAllowMulligan);
             if (game.dubiousSuccess){
-                numberOfSuccess++;
+                numberOfDubiousSuccess++;
+            }
+            if (game.evolutionSuccess){
+                numberOfEvolutionSuccess++;
             }
         }
 
-        return "Ratio: "+numberOfSuccess.toString()+"/"+numberOfTrials;
+        System.out.println("Ratio for Dubious: "+numberOfDubiousSuccess.toString()+"/"+numberOfTrials);
+        System.out.println("Ratio for Evolution: "+numberOfEvolutionSuccess.toString()+"/"+numberOfTrials);
     }
 }

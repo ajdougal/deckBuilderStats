@@ -12,7 +12,10 @@ public class Game {
     private Integer redMana, blueMana, greenMana, blackMana, whiteMana, uncoloredMana;
     private String phase;
     private Integer drawCounter = 0;
+    private Boolean startFirst = false;
+    private Boolean isAllowMulligan = false;
     public Boolean dubiousSuccess = false;
+    public Boolean evolutionSuccess = false;
 
     /** The following are for deck-testing purposes **/
     private Boolean isPerfectStart;
@@ -27,6 +30,7 @@ public class Game {
     private List<Card> exiled = new ArrayList<Card>();
     private List<Card> lands = new ArrayList<Card>();
     private List<Card> dubious = new ArrayList<Card>();
+    private List<Card> evolution= new ArrayList<Card>();
 
     public List<Card> addCard(List<Card> collection, Card card, Integer number){
         for (int counter = 0; counter < number; counter++){
@@ -42,6 +46,10 @@ public class Game {
         }
         if (target.equals("dubious")){
             this.dubious.add(deck.get(this.drawCounter));
+            this.drawCounter++;
+        }
+        if (target.equals("evolution")){
+            this.evolution.add(deck.get(this.drawCounter));
             this.drawCounter++;
         }
     }
@@ -65,8 +73,10 @@ public class Game {
         Collections.shuffle(deck);
     }
 
-    public Game(Boolean startFirst){
+    public Game(Boolean startFirst, Boolean isAllowMulligan){
 
+        this.startFirst = startFirst;
+        this.isAllowMulligan = isAllowMulligan;
         // Start of the game, build deck, shuffle, and draw hand
 
         constructDubiousEvolutionDeck(this.deck);
@@ -79,34 +89,104 @@ public class Game {
         // If start first
         // Check if have necessary starting hand for dubious
 
+        if (!startFirst){
+            drawCard("hand");
+        }
         Boolean hasFirstTurnDubious = hasFirstTurnDubious();
-        System.out.println(hasFirstTurnDubious);
+//        System.out.println(hasFirstTurnDubious);
         drawCard("hand");
         Boolean hasDubiousChallenge = hasDubiousChallenge();
-        System.out.println(hasDubiousChallenge);
 
-        if (hasFirstTurnDubious && hasDubiousChallenge){
-            System.out.println("Yay you could wreck some shit...maybe?");
-            for(Integer k = 0; k < 10; k++){
-                drawCard("dubious");
-            }
+//        System.out.println(hasDubiousChallenge);
+        if (hasFirstTurnDubious && hasDubiousChallenge) {
+            isDubiousChallengeSuccessful();
         }
-        Boolean hasBlinkCreature = false;
-        Boolean hasBomb = false;
-        for (Card card : this.dubious){
-            System.out.println(card.getTitle());
-            if (card.getTitle().equals("Generic Blink Creature")){
-                hasBlinkCreature = true;
-            }
-            if (card.getTitle().equals("Generic Bomb")){
-                hasBomb = true;
-            }
+
+        // Look for turn 3 evolution, keep things simple
+        drawCard("hand");
+        this.evolutionSuccess = isEvolutionSuccessful();
+
+        if (!(evolutionSuccess || dubiousSuccess) && isAllowMulligan){
+            performMulligan();
         }
-        if (hasBlinkCreature && hasBomb){
-            this.dubiousSuccess = true;
-        }
+
+
     }
 
+    public void performMulligan(){
+        this.hand = new ArrayList<Card>();
+        this.deck = new ArrayList<Card>();
+        this.dubious = new ArrayList<Card>();
+        this.evolution = new ArrayList<Card>();
+        this.drawCounter = 0;
+
+        constructDubiousEvolutionDeck(this.deck);
+        shuffleDeck(this.deck);
+        while (this.drawCounter < 7){
+            drawCard("hand");
+//            System.out.println("added card");
+        }
+
+        // If start first
+        // Check if have necessary starting hand for dubious
+
+        if (!this.startFirst){
+            drawCard("hand");
+        }
+        Boolean hasFirstTurnDubious = hasFirstTurnDubious();
+//        System.out.println(hasFirstTurnDubious);
+        drawCard("hand");
+        Boolean hasDubiousChallenge = hasDubiousChallenge();
+
+//        System.out.println(hasDubiousChallenge);
+        if (hasFirstTurnDubious && hasDubiousChallenge) {
+            isDubiousChallengeSuccessful();
+        }
+
+        // Look for turn 3 evolution, keep things simple
+
+        this.evolutionSuccess = isEvolutionSuccessful();
+    }
+
+    public Boolean isEvolutionSuccessful(){
+        Boolean hasEvolution = false;
+        Integer numberOfExtraGreens = 0;
+        Boolean hasAllosaurusRider = false;
+
+        for (Card card : this.hand){
+            if (card.getTitle().equals("Allosaurus Rider Cheap Cost")){
+                hasAllosaurusRider = true;
+            }
+            if (card.getTitle().equals("Eldritch Evolution")){
+                hasEvolution = true;
+            }
+            if (hasEvolution && card.getTitle().equals("Eldritch Evolution")){
+                numberOfExtraGreens++;
+            }
+            if (hasAllosaurusRider && card.getTitle().equals("Allosaurus Rider Cheap Cost")){
+                numberOfExtraGreens++;
+            }
+            if (card.getTitle().equals("Dubious Challenge")){
+                numberOfExtraGreens++;
+            }
+            if (card.getTitle().equals("Arbor Elf")){
+                numberOfExtraGreens++;
+            }
+//            if (card.getTitle().equals("Generic Bomb")){
+//                numberOfExtraGreens++;
+//            }
+        }
+
+        if (numberOfExtraGreens > 1 && hasEvolution && hasAllosaurusRider){
+            for (Integer l = 0; l < 9; l++){
+                drawCard("evolution");
+            }
+            for (Card card : this.evolution){
+                if (card.getTitle().equals("Generic Bomb")){return true;}
+            }
+        }
+        return false;
+    }
 
     public Boolean hasFirstTurnDubious(){
         Boolean hasGreenLand = false;
@@ -116,15 +196,15 @@ public class Game {
         for (Card card : this.hand){
             if (card.getTitle().equals("greenLand")){
                 hasGreenLand = true;
-                System.out.println("Has green land");
+//                System.out.println("Has green land");
             }
             if (card.getTitle().equals("Utopia Sprawl")){
                 hasLandEnchantment = true;
-                System.out.println("Has Utopia");
+//                System.out.println("Has Utopia");
             }
             if (card.getTitle().equals("Arbor Elf")){
                 hasArborElf = true;
-                System.out.println("Has Arbor Elf");
+//                System.out.println("Has Arbor Elf");
             }
         }
         if (hasGreenLand && hasArborElf && hasLandEnchantment){
@@ -140,6 +220,26 @@ public class Game {
             }
         }
         return false;
+    }
+
+    public void isDubiousChallengeSuccessful(){
+        for(Integer k = 0; k < 10; k++) {
+            drawCard("dubious");
+        }
+        Boolean hasBlinkCreature = false;
+        Boolean hasBomb = false;
+        for (Card card : this.dubious){
+//            System.out.println(card.getTitle());
+            if (card.getTitle().equals("Generic Blink Creature")){
+                hasBlinkCreature = true;
+            }
+            if (card.getTitle().equals("Generic Bomb")){
+                hasBomb = true;
+            }
+        }
+        if (hasBlinkCreature && hasBomb){
+            this.dubiousSuccess = true;
+        }
     }
 
 
