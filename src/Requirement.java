@@ -25,6 +25,7 @@ public class Requirement {
             requiredEndingCardsInHand: [],
             requiredStartingCardsInHand: [dubiousChallenge],
             requiredEndingCardsInPlay: []
+        }
 
 
      **/
